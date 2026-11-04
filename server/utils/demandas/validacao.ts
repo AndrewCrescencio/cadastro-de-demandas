@@ -8,29 +8,31 @@
 
 import { z } from 'zod'
 import { STATUS_PERMITIDOS, SETORES_PERMITIDOS, LIMITES } from './config'
+import type { Prioridade } from './config'
+import { calcularPrioridade } from './prioridade'
+
+export interface ErroValidacao {
+  campo: string
+  mensagem: string
+}
 
 /**
  * Converte data DD/MM/AAAA para objeto Date.
  */
 export function parseDataBrasileira(dataStr: string): Date | null {
-  const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/
-  const match = dataStr.match(regex)
-
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dataStr)
   if (!match) return null
 
-  const [, dia, mes, ano] = match
-  const data = new Date(Number(ano), Number(mes) - 1, Number(dia))
+  const dia = Number(match[1])
+  const mes = Number(match[2])
+  const ano = Number(match[3])
+  const data = new Date(ano, mes - 1, dia)
 
   // Valida se a data é real (ex: 31/02 seria inválida)
-  if (
-    data.getDate() !== Number(dia) ||
-    data.getMonth() !== Number(mes) - 1 ||
-    data.getFullYear() !== Number(ano)
-  ) {
-    return null
-  }
+  const dataValida =
+    data.getDate() === dia && data.getMonth() === mes - 1 && data.getFullYear() === ano
 
-  return data
+  return dataValida ? data : null
 }
 
 /**
@@ -56,29 +58,58 @@ export function converterParaISO(dataStr: string): string | null {
   return `${ano}-${mes}-${dia}`
 }
 
+const estaAusente = (valor: unknown): boolean => valor === undefined || valor === null
+
 /**
- * Validador customizado Zod para data brasileira não futura.
+ * Mensagem para campos de texto:
+ * ausente (undefined/null) = obrigatório; outro tipo = inválido.
  */
-const dataBrasileiraSchema = z.string().refine(
-  (val) => {
+const erroTexto =
+  (obrigatorio: string, invalido: string) =>
+  (iss: { input?: unknown }): string =>
+    estaAusente(iss.input) ? obrigatorio : invalido
+
+/**
+ * Mensagem para campos de lista fechada:
+ * ausente ou vazio = obrigatório; qualquer outro valor fora da lista = inválido.
+ */
+const erroListaFechada =
+  (rotulo: string) =>
+  (iss: { input?: unknown }): string =>
+    estaAusente(iss.input) || iss.input === '' ? `${rotulo} é obrigatório` : `${rotulo} inválido`
+
+/**
+ * Data de solicitação: obrigatória, formato DD/MM/AAAA, data real e não futura.
+ */
+const dataBrasileiraSchema = z
+  .string({
+    error: erroTexto(
+      'Data de solicitação é obrigatória',
+      'Data de solicitação deve ser um texto no formato DD/MM/AAAA',
+    ),
+  })
+  .trim()
+  .min(1, 'Data de solicitação é obrigatória')
+  .refine(
+    (val) => parseDataBrasileira(val) !== null,
+    'Data de solicitação deve estar no formato DD/MM/AAAA e ser uma data válida',
+  )
+  .refine((val) => {
     const data = parseDataBrasileira(val)
-    if (!data) return false
+    if (!data) return true // formato inválido já foi reportado acima
 
     const hoje = new Date()
     hoje.setHours(0, 0, 0, 0)
     return data <= hoje
-  },
-  {
-    message: 'Data de solicitação deve estar no formato DD/MM/AAAA e não pode ser futura',
-  },
-)
+  }, 'Data de solicitação não pode ser futura')
 
 /**
  * Schema Zod para validação de criação de demanda.
+ * A prioridade não faz parte da entrada: é calculada em prepararDemanda.
  */
 export const criarDemandaSchema = z.object({
   titulo: z
-    .string()
+    .string({ error: erroTexto('Título é obrigatório', 'Título deve ser um texto') })
     .trim()
     .min(1, 'Título é obrigatório')
     .max(
@@ -87,7 +118,7 @@ export const criarDemandaSchema = z.object({
     ),
 
   descricao: z
-    .string()
+    .string({ error: erroTexto('Descrição é obrigatória', 'Descrição deve ser um texto') })
     .trim()
     .min(1, 'Descrição é obrigatória')
     .max(
@@ -97,16 +128,17 @@ export const criarDemandaSchema = z.object({
 
   dataSolicitacao: dataBrasileiraSchema,
 
-  setor: z.enum(SETORES_PERMITIDOS as [string, ...string[]], {
-    required_error: 'Setor é obrigatório',
-    invalid_type_error: 'Setor inválido',
-  }),
+  setor: z.enum(SETORES_PERMITIDOS, { error: erroListaFechada('Setor') }),
 
-  status: z.enum(STATUS_PERMITIDOS as [string, ...string[]], {
-    required_error: 'Status é obrigatório',
-    invalid_type_error: 'Status inválido',
-  }),
+  status: z.enum(STATUS_PERMITIDOS, { error: erroListaFechada('Status') }),
 })
+
+export type CriarDemandaInput = z.infer<typeof criarDemandaSchema>
+
+export type DemandaNova = CriarDemandaInput & { prioridade: Prioridade }
+
+export type ResultadoCadastro =
+  { sucesso: true; dados: DemandaNova } | { sucesso: false; erros: ErroValidacao[] }
 
 /**
  * Valida dados de criação de demanda.
@@ -116,11 +148,35 @@ export function validarCriacaoDemanda(dados: unknown) {
 }
 
 /**
- * Formata erros do Zod para resposta amigável.
+ * Formata erros do Zod para resposta amigável (um erro por campo).
  */
-export function formatarErrosValidacao(erros: z.ZodError) {
-  return erros.errors.map((erro) => ({
-    campo: erro.path.join('.') || 'geral',
-    mensagem: erro.message,
-  }))
+export function formatarErrosValidacao(erros: z.ZodError): ErroValidacao[] {
+  const porCampo = new Map<string, string>()
+
+  for (const erro of erros.issues) {
+    const campo = erro.path.map(String).join('.') || 'geral'
+    if (!porCampo.has(campo)) porCampo.set(campo, erro.message)
+  }
+
+  return Array.from(porCampo, ([campo, mensagem]) => ({ campo, mensagem }))
+}
+
+/**
+ * Valida a entrada e define a prioridade automaticamente pela descrição.
+ * Qualquer `prioridade` enviada pelo cliente é ignorada.
+ */
+export function prepararDemanda(dados: unknown): ResultadoCadastro {
+  const resultado = validarCriacaoDemanda(dados)
+
+  if (!resultado.success) {
+    return { sucesso: false, erros: formatarErrosValidacao(resultado.error) }
+  }
+
+  return {
+    sucesso: true,
+    dados: {
+      ...resultado.data,
+      prioridade: calcularPrioridade(resultado.data.descricao),
+    },
+  }
 }
