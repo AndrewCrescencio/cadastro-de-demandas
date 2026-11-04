@@ -8,50 +8,33 @@
  * RNF-001: Lógica isolada e testável
  */
 
-import type { Prioridade } from './config'
 import { PALAVRAS_CHAVE_ALTA_PRIORIDADE } from './config'
+import type { PalavraChave, Prioridade } from './config'
 
-// Tipos diretos
-type PalavraChave = (typeof PALAVRAS_CHAVE_ALTA_PRIORIDADE)[number]
+/**
+ * Quebra o texto em palavras (letras e números, com acentos), em minúsculas.
+ * Pontuação, hífen e espaços separam palavras: "ERRO: falha!" -> {"erro", "falha"}.
+ */
+function extrairPalavras(texto: string): Set<string> {
+  return new Set(texto.toLowerCase().split(/[^\p{L}\p{N}]+/u))
+}
+
+/**
+ * Identifica palavras-chave de alta prioridade presentes na descrição.
+ * Aceita a palavra inteira e o plural regular (+s); variações não ativam.
+ */
+export function identificarPalavrasChave(descricao: string): PalavraChave[] {
+  if (typeof descricao !== 'string') return []
+
+  const palavras = extrairPalavras(descricao)
+  return PALAVRAS_CHAVE_ALTA_PRIORIDADE.filter(
+    (palavra) => palavras.has(palavra) || palavras.has(`${palavra}s`),
+  )
+}
 
 /**
  * Calcula a prioridade de uma demanda baseada em sua descrição.
  */
 export function calcularPrioridade(descricao: string): Prioridade {
-  if (!descricao || typeof descricao !== 'string') {
-    return 'Normal'
-  }
-
-  const descricaoNormalizada = descricao.toLowerCase()
-
-  // Buscar palavras inteiras usando word boundary
-  for (const palavra of PALAVRAS_CHAVE_ALTA_PRIORIDADE) {
-    const regex = new RegExp(`\\b${palavra}\\b`, 'i')
-    if (regex.test(descricaoNormalizada)) {
-      return 'Alta'
-    }
-  }
-
-  return 'Normal'
-}
-
-/**
- * Identifica palavras-chave presentes na descrição.
- */
-export function identificarPalavrasChave(descricao: string): PalavraChave[] {
-  if (!descricao || typeof descricao !== 'string') {
-    return []
-  }
-
-  const descricaoNormalizada = descricao.toLowerCase()
-  const encontradas: PalavraChave[] = []
-
-  for (const palavra of PALAVRAS_CHAVE_ALTA_PRIORIDADE) {
-    const regex = new RegExp(`\\b${palavra}\\b`, 'i')
-    if (regex.test(descricaoNormalizada)) {
-      encontradas.push(palavra)
-    }
-  }
-
-  return encontradas
+  return identificarPalavrasChave(descricao).length > 0 ? 'Alta' : 'Normal'
 }
