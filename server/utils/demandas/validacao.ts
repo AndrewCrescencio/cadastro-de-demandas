@@ -58,6 +58,31 @@ export function converterParaISO(dataStr: string): string | null {
   return `${ano}-${mes}-${dia}`
 }
 
+/**
+ * Fuso usado para decidir o que é "hoje" (FR-005).
+ * Fixo de propósito: o servidor pode rodar em UTC, e à noite no Brasil
+ * ele já estaria no dia seguinte, aceitando datas futuras.
+ */
+export const FUSO_HORARIO = 'America/Sao_Paulo'
+
+/**
+ * Data de "hoje" no fuso da organização, em ISO 8601 (YYYY-MM-DD).
+ * Recebe `agora` para poder ser testada sem depender do relógio.
+ */
+export function hojeISO(agora: Date = new Date()): string {
+  const partes = new Intl.DateTimeFormat('en-CA', {
+    timeZone: FUSO_HORARIO,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(agora)
+
+  const valor = (tipo: Intl.DateTimeFormatPartTypes): string =>
+    partes.find((p) => p.type === tipo)?.value ?? ''
+
+  return `${valor('year')}-${valor('month')}-${valor('day')}`
+}
+
 const estaAusente = (valor: unknown): boolean => valor === undefined || valor === null
 
 /**
@@ -95,12 +120,12 @@ const dataBrasileiraSchema = z
     'Data de solicitação deve estar no formato DD/MM/AAAA e ser uma data válida',
   )
   .refine((val) => {
-    const data = parseDataBrasileira(val)
-    if (!data) return true // formato inválido já foi reportado acima
+    const iso = converterParaISO(val)
+    if (!iso) return true // formato inválido já foi reportado acima
 
-    const hoje = new Date()
-    hoje.setHours(0, 0, 0, 0)
-    return data <= hoje
+    // Datas ISO (YYYY-MM-DD) comparam corretamente como texto,
+    // sem depender do fuso horário do servidor.
+    return iso <= hojeISO()
   }, 'Data de solicitação não pode ser futura')
 
 /**
