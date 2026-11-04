@@ -10,6 +10,7 @@
  */
 
 export const STATUS_PERMITIDOS = ['Aberta', 'Em andamento', 'Concluída', 'Cancelada'] as const
+
 export const SETORES_PERMITIDOS = [
   'Administrativo',
   'Comercial',
@@ -20,7 +21,13 @@ export const SETORES_PERMITIDOS = [
   'TI',
   'Outros',
 ] as const
+
 export const PRIORIDADES = ['Normal', 'Alta'] as const
+
+// Palavras-chave que definem prioridade Alta (minúsculas, no singular).
+// O plural regular (+s) é aceito automaticamente; plurais irregulares devem ser listados.
+export const PALAVRAS_CHAVE_ALTA_PRIORIDADE = ['urgente', 'erro'] as const
+
 export const LIMITES = {
   TITULO_MAX_CHARS: 150,
   DESCRICAO_MAX_CHARS: 2000,
@@ -30,3 +37,4 @@ export const LIMITES = {
 export type Status = (typeof STATUS_PERMITIDOS)[number]
 export type Setor = (typeof SETORES_PERMITIDOS)[number]
 export type Prioridade = (typeof PRIORIDADES)[number]
+export type PalavraChave = (typeof PALAVRAS_CHAVE_ALTA_PRIORIDADE)[number]
