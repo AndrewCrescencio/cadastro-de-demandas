@@ -1,24 +1,18 @@
-# Nuxt dev/build outputs
-.output
-.data
-.nuxt
-.nitro
-.cache
-dist
-
-# Node dependencies
-node_modules
-
-# Logs
-logs
+node_modules/
+dist/
+.output/
+.nuxt/
+.nitro/
+.data/
+.cache/
 *.log
-
-# Misc
-.DS_Store
-.fleet
-.idea
-
-# Local env files
 .env
 .env.*
 !.env.example
+.DS_Store
+coverage/
+_snapshot/
+*.tsbuildinfo
+.eslintcache
+# artefacto do @nuxt/test-utils: escrito a cada run do projeto app (versão setups)
+.nuxtrc
