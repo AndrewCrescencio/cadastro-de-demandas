@@ -11,33 +11,22 @@
 import type { Prioridade } from './config'
 import { PALAVRAS_CHAVE_ALTA_PRIORIDADE } from './config'
 
+// Tipos diretos
+type PalavraChave = (typeof PALAVRAS_CHAVE_ALTA_PRIORIDADE)[number]
+
 /**
  * Calcula a prioridade de uma demanda baseada em sua descrição.
- *
- * @param descricao - Texto da descrição da demanda
- * @returns "Alta" se contiver palavras-chave, "Normal" caso contrário
- *
- * @example
- * calcularPrioridade("Erro ao gerar relatório") // "Alta"
- * calcularPrioridade("Criar novo relatório") // "Normal"
- * calcularPrioridade("O terror dos prazos") // "Normal" (palavra dentro de outra)
  */
 export function calcularPrioridade(descricao: string): Prioridade {
-  // FR-013: Somente a descrição é avaliada (título não influencia)
   if (!descricao || typeof descricao !== 'string') {
     return 'Normal'
   }
 
-  // FR-012: Ignorar maiúsculas/minúsculas
   const descricaoNormalizada = descricao.toLowerCase()
 
-  // P-3: Buscar palavras inteiras, não trechos
-  // Word boundary \b garante que não pegue "erro" dentro de "terror"
+  // Buscar palavras inteiras usando word boundary
   for (const palavra of PALAVRAS_CHAVE_ALTA_PRIORIDADE) {
-    // Cria regex para palavra completa, case-insensitive
-    // \b = word boundary (início/fim da string, espaço, pontuação)
     const regex = new RegExp(`\\b${palavra}\\b`, 'i')
-
     if (regex.test(descricaoNormalizada)) {
       return 'Alta'
     }
@@ -47,19 +36,15 @@ export function calcularPrioridade(descricao: string): Prioridade {
 }
 
 /**
- * Testa se uma descrição contém palavras-chave de alta prioridade.
- * Útil para dar feedback ao usuário.
- *
- * @param descricao - Texto da descrição
- * @returns Array com as palavras-chave encontradas
+ * Identifica palavras-chave presentes na descrição.
  */
-export function identificarPalavrasChave(descricao: string): string[] {
+export function identificarPalavrasChave(descricao: string): PalavraChave[] {
   if (!descricao || typeof descricao !== 'string') {
     return []
   }
 
   const descricaoNormalizada = descricao.toLowerCase()
-  const encontradas: string[] = []
+  const encontradas: PalavraChave[] = []
 
   for (const palavra of PALAVRAS_CHAVE_ALTA_PRIORIDADE) {
     const regex = new RegExp(`\\b${palavra}\\b`, 'i')

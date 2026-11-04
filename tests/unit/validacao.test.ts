@@ -11,7 +11,7 @@ import {
   parseDataBrasileira,
   converterParaISO,
   formatarDataBrasileira,
-} from '~/server/utils/demandas/validacao'
+} from '../../server/utils/demandas/validacao'
 
 describe('Validação de Criação de Demanda', () => {
   const dadosValidos = {

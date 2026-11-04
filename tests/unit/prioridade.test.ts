@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { calcularPrioridade } from '~/server/utils/demandas/prioridade'
+import { calcularPrioridade } from '../../server/utils/demandas/prioridade'
 
 describe('Regra de Prioridade Automática - Anexo A', () => {
   describe('Exemplos que devem resultar em Alta', () => {

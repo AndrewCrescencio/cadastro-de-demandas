@@ -3,7 +3,7 @@
  * Utilizados tanto no frontend quanto no backend.
  */
 
-import type { Status, Setor, Prioridade } from '~/server/utils/demandas/config'
+import type { Status, Setor, Prioridade } from '../../server/utils/demandas/config'
 
 /**
  * Estrutura completa de uma demanda persistida.
