@@ -11,6 +11,7 @@
 
 import { db } from '../db'
 import { demandas } from '../../db/schema/demandas'
+import { eq } from 'drizzle-orm'
 import { converterParaISO } from './validacao'
 import type { DemandaNova } from './validacao'
 import type { Demanda } from '#shared/types/demanda'
@@ -22,6 +23,7 @@ import type { Demanda } from '#shared/types/demanda'
 export interface DemandaRepositorio {
   inserir(dados: DemandaNova): Promise<Demanda>
   listar(): Promise<Demanda[]>
+  buscarPorId(id: number): Promise<Demanda | null>
 }
 
 /**
@@ -74,6 +76,25 @@ export function criarDemandaRepositorio(database: typeof db = db): DemandaReposi
         prioridade: linha.prioridade,
         criadoEm: linha.criadoEm,
       }))
+    },
+
+    async buscarPorId(id) {
+      const [linha] = await database.select().from(demandas).where(eq(demandas.id, id))
+
+      if (!linha) {
+        return null
+      }
+
+      return {
+        id: linha.id,
+        titulo: linha.titulo,
+        descricao: linha.descricao,
+        dataSolicitacao: linha.dataSolicitacao,
+        setor: linha.setor,
+        status: linha.status,
+        prioridade: linha.prioridade,
+        criadoEm: linha.criadoEm,
+      } as Demanda
     },
   }
 }
