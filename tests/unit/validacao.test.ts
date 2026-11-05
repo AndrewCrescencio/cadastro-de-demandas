@@ -11,6 +11,7 @@ import {
   parseDataBrasileira,
   converterParaISO,
   formatarDataBrasileira,
+  hojeISO,
 } from '../../server/utils/demandas/validacao'
 
 describe('Validação de Criação de Demanda', () => {
@@ -65,7 +66,7 @@ describe('Validação de Criação de Demanda', () => {
       expect(resultado.success).toBe(false)
       if (!resultado.success) {
         expect(
-          resultado.error.errors.some(
+          resultado.error.issues.some(
             (e) => e.path.includes('titulo') && e.message.includes('obrigatório'),
           ),
         ).toBe(true)
@@ -80,7 +81,7 @@ describe('Validação de Criação de Demanda', () => {
 
       expect(resultado.success).toBe(false)
       if (!resultado.success) {
-        expect(resultado.error.errors.some((e) => e.path.includes('descricao'))).toBe(true)
+        expect(resultado.error.issues.some((e) => e.path.includes('descricao'))).toBe(true)
       }
     })
 
@@ -101,7 +102,7 @@ describe('Validação de Criação de Demanda', () => {
       expect(resultado.success).toBe(false)
       if (!resultado.success) {
         // Deve listar múltiplos campos de uma vez (História 2, cenário 2)
-        expect(resultado.error.errors.length).toBeGreaterThan(1)
+        expect(resultado.error.issues.length).toBeGreaterThan(1)
       }
     })
   })
@@ -115,7 +116,7 @@ describe('Validação de Criação de Demanda', () => {
 
       expect(resultado.success).toBe(false)
       if (!resultado.success) {
-        expect(resultado.error.errors.some((e) => e.message.includes('futura'))).toBe(true)
+        expect(resultado.error.issues.some((e) => e.message.includes('futura'))).toBe(true)
       }
     })
 
@@ -209,7 +210,7 @@ describe('Validação de Criação de Demanda', () => {
 
       expect(resultado.success).toBe(false)
       if (!resultado.success) {
-        expect(resultado.error.errors.some((e) => e.message.includes('150'))).toBe(true)
+        expect(resultado.error.issues.some((e) => e.message.includes('150'))).toBe(true)
       }
     })
 
@@ -230,7 +231,7 @@ describe('Validação de Criação de Demanda', () => {
 
       expect(resultado.success).toBe(false)
       if (!resultado.success) {
-        expect(resultado.error.errors.some((e) => e.message.includes('2000'))).toBe(true)
+        expect(resultado.error.issues.some((e) => e.message.includes('2000'))).toBe(true)
       }
     })
 
@@ -251,8 +252,12 @@ describe('Validação de Criação de Demanda', () => {
         prioridade: 'Alta', // Tentando forçar prioridade
       })
 
-      // Com strict(), campos extras são rejeitados
-      expect(resultado.success).toBe(false)
+      // O schema usa modo strip (não strict): campos extras são ignorados, não rejeitados.
+      // A prioridade é calculada depois em prepararDemanda, nunca aceita do cliente.
+      expect(resultado.success).toBe(true)
+      if (resultado.success) {
+        expect(resultado.data.prioridade).toBeUndefined()
+      }
     })
   })
 })
@@ -296,6 +301,37 @@ describe('Funções de Data', () => {
     it('adiciona zero à esquerda quando necessário', () => {
       const data = new Date(2026, 0, 5) // 5 de janeiro
       expect(formatarDataBrasileira(data)).toBe('05/01/2026')
+    })
+  })
+
+  describe('hojeISO: fuso America/Sao_Paulo (FR-005)', () => {
+    it('calcula "hoje" em America/Sao_Paulo, não no fuso do servidor (UTC)', () => {
+      // Brasil não adota horário de verão: America/Sao_Paulo está sempre em UTC-3.
+      //
+      // Servidor em UTC: 01/11/2026 00:30 -> em SP ainda é 31/10/2026 21:30.
+      const agoraEmUTCPertoMeiaNoite = new Date('2026-11-01T00:30:00Z')
+      expect(hojeISO(agoraEmUTCPertoMeiaNoite)).toBe('2026-10-31')
+
+      // Servidor em UTC: 01/11/2026 03:30 -> em SP já é 01/11/2026 00:30.
+      const agoraEmUTCDepoisMeiaNoiteSP = new Date('2026-11-01T03:30:00Z')
+      expect(hojeISO(agoraEmUTCDepoisMeiaNoiteSP)).toBe('2026-11-01')
+
+      // Servidor em UTC: 31/10/2026 23:30 -> em SP ainda é 31/10/2026 20:30.
+      const agoraEmUTCUltimoDia = new Date('2026-10-31T23:30:00Z')
+      expect(hojeISO(agoraEmUTCUltimoDia)).toBe('2026-10-31')
+    })
+
+    it('data que já é "amanhã" em SP ainda que seja "ontem" em UTC é tratada como futura', () => {
+      // Brasil não adota horário de verão: America/Sao_Paulo está sempre em UTC-3.
+      //
+      // agora em UTC = 31/10/2026 20:00 -> em SP é 31/10/2026 17:00, hoje é 31/10.
+      const agora = new Date('2026-10-31T20:00:00Z')
+      expect(hojeISO(agora)).toBe('2026-10-31')
+
+      // 01/11/2026 seria "amanhã" em SP: 2026-11-01 > 2026-10-31 => futura.
+      const iso = converterParaISO('01/11/2026')!
+      expect(iso).toBe('2026-11-01')
+      expect(iso > hojeISO(agora)).toBe(true)
     })
   })
 })
