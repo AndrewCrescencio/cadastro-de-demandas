@@ -1,13 +1,39 @@
 /**
- * Funções puras de manipulação de data no formato brasileiro (DD/MM/AAAA).
+ * Funções puras e configuração compartilhada entre servidor e cliente.
  *
  * Reaproveitáveis tanto pelo servidor (validacao.ts) quanto pelo cliente
  * (DemandaForm.vue), sem dependência de Zod nem de nada server-only.
  *
  * FR-005: Data válida, não futura; "hoje" calculado no fuso America/Sao_Paulo.
+ * FR-006: Setores e Status em listas fechadas.
+ * FR-007: Limites de caracteres.
  */
 
 export const FUSO_HORARIO = 'America/Sao_Paulo'
+
+export const LIMITES = {
+  TITULO_MAX_CHARS: 150,
+  DESCRICAO_MAX_CHARS: 2000,
+} as const
+
+export const STATUS_PERMITIDOS = ['Aberta', 'Em andamento', 'Concluída', 'Cancelada'] as const
+
+export const SETORES_PERMITIDOS = [
+  'Administrativo',
+  'Comercial',
+  'Financeiro',
+  'Jurídico',
+  'Operações',
+  'RH',
+  'TI',
+  'Outros',
+] as const
+
+export const PRIORIDADES = ['Normal', 'Alta'] as const
+
+export type Status = (typeof STATUS_PERMITIDOS)[number]
+export type Setor = (typeof SETORES_PERMITIDOS)[number]
+export type Prioridade = (typeof PRIORIDADES)[number]
 
 /**
  * Converte data DD/MM/AAAA para objeto Date.
