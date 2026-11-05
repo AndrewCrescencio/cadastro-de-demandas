@@ -9,10 +9,7 @@
  */
 
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest'
-// eslint-disable-next-line import/no-duplicates
-import { setup } from '@nuxt/test-utils'
-// eslint-disable-next-line import/no-duplicates
-import { $fetch } from '@nuxt/test-utils/e2e'
+import { setup, $fetch } from '@nuxt/test-utils/e2e'
 import { fileURLToPath } from 'node:url'
 import { db } from '../../server/utils/db'
 import { demandas } from '../../server/db/schema/demandas'
