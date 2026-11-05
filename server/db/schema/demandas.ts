@@ -6,7 +6,7 @@
  */
 
 import { pgTable, serial, varchar, text, date, timestamp, pgEnum } from 'drizzle-orm/pg-core'
-import { STATUS_PERMITIDOS, SETORES_PERMITIDOS, PRIORIDADES } from '../utils/demandas/config'
+import { STATUS_PERMITIDOS, SETORES_PERMITIDOS, PRIORIDADES } from '../../utils/demandas/config.ts'
 
 // Enums do PostgreSQL para garantir integridade referencial
 export const statusEnum = pgEnum('status_demanda', STATUS_PERMITIDOS)
