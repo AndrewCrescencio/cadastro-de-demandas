@@ -41,6 +41,20 @@ export interface FiltrosDemanda {
 }
 
 /**
+ * Demanda na listagem (GET /api/demandas).
+ *
+ * A descrição completa NÃO vem na listagem (FR-018 trata do detalhe, não da listagem).
+ */
+export interface DemandaListagem {
+  id: number
+  titulo: string
+  dataSolicitacao: string // ISO 8601 (YYYY-MM-DD)
+  setor: Setor
+  status: Status
+  prioridade: Prioridade
+}
+
+/**
  * Resumo estatístico das demandas (opcional - FR-020).
  */
 export interface ResumoDemandas {

@@ -21,6 +21,7 @@ import type { Demanda } from '#shared/types/demanda'
  */
 export interface DemandaRepositorio {
   inserir(dados: DemandaNova): Promise<Demanda>
+  listar(): Promise<Demanda[]>
 }
 
 /**
@@ -58,6 +59,21 @@ export function criarDemandaRepositorio(database: typeof db = db): DemandaReposi
         prioridade: linha.prioridade,
         criadoEm: linha.criadoEm,
       } as Demanda
+    },
+
+    async listar() {
+      const linhas = await database.select().from(demandas)
+
+      return linhas.map((linha) => ({
+        id: linha.id,
+        titulo: linha.titulo,
+        descricao: linha.descricao,
+        dataSolicitacao: linha.dataSolicitacao,
+        setor: linha.setor,
+        status: linha.status,
+        prioridade: linha.prioridade,
+        criadoEm: linha.criadoEm,
+      }))
     },
   }
 }
