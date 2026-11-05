@@ -17,7 +17,7 @@ export function validateOrThrow<T>(schema: ZodSchema<T>, data: unknown): T {
   const result = schema.safeParse(data)
 
   if (!result.success) {
-    const errors = result.error.errors
+    const errors = result.error.issues
       .map((err) => `${err.path.join('.')}: ${err.message}`)
       .join('; ')
 
