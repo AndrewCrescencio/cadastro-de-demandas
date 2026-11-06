@@ -10,7 +10,6 @@
         maxlength="150"
         :class="{ invalido: erroTitulo || erroServidorTitulo }"
         :placeholder="`Máximo ${LIMITES.TITULO_MAX_CHARS} caracteres`"
-        @input="onInputTitulo"
         @blur="validarTitulo"
       />
       <span class="contador">{{ titulo.length }} / {{ LIMITES.TITULO_MAX_CHARS }}</span>
@@ -29,7 +28,6 @@
         :class="{ invalido: erroDescricao || erroServidorDescricao }"
         :placeholder="`Máximo ${LIMITES.DESCRICAO_MAX_CHARS} caracteres`"
         rows="4"
-        @input="onInputDescricao"
         @blur="validarDescricao"
       ></textarea>
       <span class="contador">{{ descricao.length }} / {{ LIMITES.DESCRICAO_MAX_CHARS }}</span>
@@ -139,19 +137,6 @@ function aplicarMascara(valor) {
   if (digitos.length <= 2) return digitos
   if (digitos.length <= 4) return `${digitos.slice(0, 2)}/${digitos.slice(2)}`
   return `${digitos.slice(0, 2)}/${digitos.slice(2, 4)}/${digitos.slice(4)}`
-}
-
-function onInputTitulo(event) {
-  const input = event.target
-  const proximo = input.value.trim()
-  titulo.value = proximo
-  input.value = proximo
-}
-
-function onInputDescricao(event) {
-  const textarea = event.target
-  descricao.value = textarea.value.trim()
-  textarea.value = descricao.value
 }
 
 function onInputData(event) {
@@ -266,8 +251,8 @@ async function onSubmit() {
     const resposta = await $fetch('/api/demandas', {
       method: 'POST',
       body: {
-        titulo: titulo.value,
-        descricao: descricao.value,
+        titulo: titulo.value.trim(),
+        descricao: descricao.value.trim(),
         dataSolicitacao: dataSolicitacao.value,
         setor: setor.value,
         status: status.value,
