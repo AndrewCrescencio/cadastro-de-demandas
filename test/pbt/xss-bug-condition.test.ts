@@ -10,23 +10,13 @@
  * Requirements: 1.1, 1.2, 1.3, 1.4, 1.5 from bugfix.md
  */
 
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { setup, $fetch } from '@nuxt/test-utils/e2e'
 import { fileURLToPath } from 'node:url'
 
 describe('XSS Bug Condition - Exploration Test (EXPECTED TO FAIL on unfixed code)', async () => {
   await setup({
     rootDir: fileURLToPath(new URL('../..', import.meta.url)),
-  })
-
-  afterEach(async () => {
-    // Limpar demandas criadas durante o teste
-    try {
-      await $fetch('/api/demandas')
-      // Note: Sem endpoint DELETE, não podemos limpar. Aceitável para testes de exploração.
-    } catch {
-      // Ignorar erro de limpeza
-    }
   })
 
   describe('Property 1: Bug Condition - XSS Payloads Stored Without Sanitization', () => {
