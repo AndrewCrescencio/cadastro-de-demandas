@@ -237,9 +237,10 @@ describe('Cadastro de Demandas - E2E', () => {
   })
 
   describe('XSS Protection', () => {
-    it('Título com <script> → renderiza como texto, não executa', () => {
+    it('Título com <script> → sanitizado, não executa como script', () => {
       const tituloMalicioso = '<script>alert(1)</script>'
       const descricaoMaliciosa = '<img src=x onerror="alert(2)">'
+      const tituloEsperado = 'alert(1)' // script tags removidas, conteúdo mantido
 
       cy.visit('/')
 
@@ -253,26 +254,84 @@ describe('Cadastro de Demandas - E2E', () => {
 
       cy.url().should('match', /\/demanda\/\d+$/)
 
-      // Confirmar que o texto aparece literalmente (não como HTML/script)
-      cy.dataCy('detalhe-titulo').should('contain.text', '<script>alert(1)</script>')
-      cy.dataCy('detalhe-descricao').should('contain.text', '<img src=x onerror="alert(2)">')
+      // Confirmar que o texto foi sanitizado (script tags removidas)
+      cy.dataCy('detalhe-titulo').should('contain.text', tituloEsperado)
+      cy.dataCy('detalhe-titulo').should('not.contain.text', '<script>')
+      cy.dataCy('detalhe-descricao').should('not.contain.text', '<img')
 
-      // Confirmar que não há elementos script ou img injetados
+      // Confirmar que não há elementos script ou img injetados no DOM
       cy.dataCy('detalhe-titulo').find('script').should('not.exist')
       cy.dataCy('detalhe-descricao').find('img').should('not.exist')
+      cy.get('script').should('not.exist')
+      cy.get('img[src="x"]').should('not.exist')
 
       // Ir para a listagem e verificar também
       cy.visit('/consulta')
       cy.wait(500)
 
       cy.dataCy('tabela-demandas').within(() => {
-        cy.contains(tituloMalicioso).should('exist')
+        cy.contains(tituloEsperado).should('exist')
+        cy.contains('<script>').should('not.exist')
+        cy.contains('<img').should('not.exist')
         cy.get('script').should('not.exist')
         cy.get('img[src="x"]').should('not.exist')
       })
     })
 
-    it('Confirmar que nenhum alert foi disparado durante o teste', () => {
+    it('Link javascript: → tag removida, apenas texto permanece', () => {
+      const tituloMalicioso = '<a href="javascript:alert(3)">Clique aqui</a>'
+      const tituloEsperado = 'Clique aqui'
+
+      cy.visit('/')
+
+      cy.dataCy('input-titulo').type(tituloMalicioso)
+      cy.dataCy('input-descricao').type('Descricao segura')
+      cy.dataCy('input-data').type('05112026')
+      cy.dataCy('select-setor').select('TI')
+      cy.dataCy('select-status').select('Aberta')
+
+      cy.dataCy('btn-submit').click()
+
+      cy.url().should('match', /\/demanda\/\d+$/)
+
+      cy.dataCy('detalhe-titulo').should('contain.text', tituloEsperado)
+      cy.dataCy('detalhe-titulo').should('not.contain.text', '<a')
+      cy.dataCy('detalhe-titulo').should('not.contain.text', 'javascript:')
+      cy.get('a[href*="javascript"]').should('not.exist')
+    })
+
+    it('Múltiplos vetores XSS combinados → todos removidos', () => {
+      const xssTitulo = '<script>alert("xss")</script>Teste'
+      const xssDescricao =
+        '<img src=x onerror="alert(\'xss2\')"><div onclick="alert(3)">Texto</div>'
+      const tituloEsperado = 'alert("xss")Teste'
+
+      cy.visit('/')
+
+      cy.dataCy('input-titulo').type(xssTitulo)
+      cy.dataCy('input-descricao').type(xssDescricao)
+      cy.dataCy('input-data').type('05112026')
+      cy.dataCy('select-setor').select('TI')
+      cy.dataCy('select-status').select('Aberta')
+
+      cy.dataCy('btn-submit').click()
+
+      cy.url().should('match', /\/demanda\/\d+$/)
+
+      cy.dataCy('detalhe-titulo').should('contain.text', tituloEsperado)
+      cy.dataCy('detalhe-titulo').should('not.contain.text', '<script>')
+      cy.dataCy('detalhe-descricao').should('contain.text', 'Texto')
+      cy.dataCy('detalhe-descricao').should('not.contain.text', '<img')
+      cy.dataCy('detalhe-descricao').should('not.contain.text', 'onerror')
+      cy.dataCy('detalhe-descricao').should('not.contain.text', 'onclick')
+
+      // Nenhum alert deve ser disparado
+      cy.on('window:alert', (text) => {
+        throw new Error(`Alert inesperado: ${text}`)
+      })
+    })
+
+    it('Confirmar que nenhum alert foi disparado durante os testes XSS', () => {
       // Cypress detecta automaticamente alerts não tratados
       // Se algum alert for disparado, o teste falha
       cy.on('window:alert', (text) => {
