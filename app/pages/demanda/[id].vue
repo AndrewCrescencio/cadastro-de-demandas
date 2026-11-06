@@ -1,33 +1,44 @@
 <template>
-  <div class="pagina">
-    <div v-if="carregando" class="carregando">
+  <div class="pagina" data-cy="pagina-detalhe">
+    <div v-if="carregando" class="carregando" data-cy="loading">
       <span>Carregando…</span>
     </div>
 
-    <div v-else-if="erro" class="erro-bloco">
+    <div v-else-if="erro" class="erro-bloco" data-cy="erro-detalhe">
       <span>{{ erro }}</span>
       <NuxtLink to="/consulta" class="link-voltar">Voltar à consulta</NuxtLink>
     </div>
 
-    <div v-else-if="demanda" class="detalhe">
+    <div v-else-if="demanda" class="detalhe" data-cy="demanda-detalhe">
       <div class="cabecalho">
-        <h1>{{ demanda.titulo }}</h1>
-        <span class="badge" :class="{ alta: demanda.prioridade === 'Alta' }">
+        <h1 data-cy="detalhe-titulo">{{ demanda.titulo }}</h1>
+        <span
+          class="badge"
+          data-cy="detalhe-prioridade"
+          :class="{ alta: demanda.prioridade === 'Alta' }"
+        >
           {{ demanda.prioridade }}
         </span>
       </div>
 
       <div class="metadados">
-        <p><strong>Data de Solicitação:</strong> {{ formatarData(demanda.dataSolicitacao) }}</p>
-        <p><strong>Setor:</strong> {{ demanda.setor }}</p>
-        <p><strong>Status:</strong> {{ demanda.status }}</p>
+        <p>
+          <strong>Data de Solicitação:</strong>
+          <span data-cy="detalhe-data">{{ formatarData(demanda.dataSolicitacao) }}</span>
+        </p>
+        <p>
+          <strong>Setor:</strong> <span data-cy="detalhe-setor">{{ demanda.setor }}</span>
+        </p>
+        <p>
+          <strong>Status:</strong> <span data-cy="detalhe-status">{{ demanda.status }}</span>
+        </p>
         <p><strong>Prioridade:</strong> {{ demanda.prioridade }}</p>
         <p><strong>Criado em:</strong> {{ formatarDataHora(demanda.criadoEm) }}</p>
       </div>
 
       <div class="descricao">
         <h2>Descrição</h2>
-        <p>{{ demanda.descricao }}</p>
+        <p data-cy="detalhe-descricao">{{ demanda.descricao }}</p>
       </div>
 
       <div class="acoes">
@@ -36,7 +47,7 @@
       </div>
     </div>
 
-    <div v-else class="vazio">
+    <div v-else class="vazio" data-cy="detalhe-vazio">
       <span>Nenhuma demanda selecionada.</span>
       <NuxtLink to="/consulta" class="link-voltar">Voltar à consulta</NuxtLink>
     </div>

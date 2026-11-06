@@ -1,20 +1,23 @@
 <template>
-  <form @submit.prevent="onSubmit" class="demanda-form">
+  <form class="demanda-form" data-cy="demanda-form" @submit.prevent="onSubmit">
     <div class="campo">
       <label for="titulo">Título <span class="obrigatorio">*</span></label>
       <input
         id="titulo"
+        v-model="titulo"
+        data-cy="input-titulo"
         type="text"
         maxlength="150"
-        v-model="titulo"
-        @input="onInputTitulo"
-        @blur="validarTitulo"
         :class="{ invalido: erroTitulo || erroServidorTitulo }"
         :placeholder="`Máximo ${LIMITES.TITULO_MAX_CHARS} caracteres`"
+        @input="onInputTitulo"
+        @blur="validarTitulo"
       />
       <span class="contador">{{ titulo.length }} / {{ LIMITES.TITULO_MAX_CHARS }}</span>
-      <span class="erro" v-if="erroTitulo">{{ erroTitulo }}</span>
-      <span class="erro servidor" v-if="erroServidorTitulo">{{ erroServidorTitulo }}</span>
+      <span v-if="erroTitulo" class="erro" data-cy="erro-titulo">{{ erroTitulo }}</span>
+      <span v-if="erroServidorTitulo" class="erro servidor" data-cy="erro-servidor-titulo">{{
+        erroServidorTitulo
+      }}</span>
     </div>
 
     <div class="campo">
@@ -22,32 +25,38 @@
       <textarea
         id="descricao"
         v-model="descricao"
-        @input="onInputDescricao"
-        @blur="validarDescricao"
+        data-cy="input-descricao"
         :class="{ invalido: erroDescricao || erroServidorDescricao }"
         :placeholder="`Máximo ${LIMITES.DESCRICAO_MAX_CHARS} caracteres`"
         rows="4"
+        @input="onInputDescricao"
+        @blur="validarDescricao"
       ></textarea>
       <span class="contador">{{ descricao.length }} / {{ LIMITES.DESCRICAO_MAX_CHARS }}</span>
-      <span class="erro" v-if="erroDescricao">{{ erroDescricao }}</span>
-      <span class="erro servidor" v-if="erroServidorDescricao">{{ erroServidorDescricao }}</span>
+      <span v-if="erroDescricao" class="erro" data-cy="erro-descricao">{{ erroDescricao }}</span>
+      <span v-if="erroServidorDescricao" class="erro servidor" data-cy="erro-servidor-descricao">{{
+        erroServidorDescricao
+      }}</span>
     </div>
 
     <div class="campo">
       <label for="dataSolicitacao">Data de Solicitação <span class="obrigatorio">*</span></label>
       <input
         id="dataSolicitacao"
+        v-model="dataSolicitacao"
+        data-cy="input-data"
         type="text"
         inputmode="numeric"
         maxlength="10"
         placeholder="DD/MM/AAAA"
-        v-model="dataSolicitacao"
+        :class="{ invalido: erroData || erroServidorData }"
         @input="onInputData"
         @blur="validarData"
-        :class="{ invalido: erroData || erroServidorData }"
       />
-      <span class="erro" v-if="erroData">{{ erroData }}</span>
-      <span class="erro servidor" v-if="erroServidorData">{{ erroServidorData }}</span>
+      <span v-if="erroData" class="erro" data-cy="erro-data">{{ erroData }}</span>
+      <span v-if="erroServidorData" class="erro servidor" data-cy="erro-servidor-data">{{
+        erroServidorData
+      }}</span>
     </div>
 
     <div class="campo">
@@ -55,14 +64,17 @@
       <select
         id="setor"
         v-model="setor"
-        @blur="validarSetor"
+        data-cy="select-setor"
         :class="{ invalido: erroSetor || erroServidorSetor }"
+        @blur="validarSetor"
       >
         <option value="">Selecione um setor</option>
         <option v-for="s in SETORES_PERMITIDOS" :key="s" :value="s">{{ s }}</option>
       </select>
-      <span class="erro" v-if="erroSetor">{{ erroSetor }}</span>
-      <span class="erro servidor" v-if="erroServidorSetor">{{ erroServidorSetor }}</span>
+      <span v-if="erroSetor" class="erro" data-cy="erro-setor">{{ erroSetor }}</span>
+      <span v-if="erroServidorSetor" class="erro servidor" data-cy="erro-servidor-setor">{{
+        erroServidorSetor
+      }}</span>
     </div>
 
     <div class="campo">
@@ -70,17 +82,20 @@
       <select
         id="status"
         v-model="status"
-        @blur="validarStatus"
+        data-cy="select-status"
         :class="{ invalido: erroStatus || erroServidorStatus }"
+        @blur="validarStatus"
       >
         <option value="">Selecione um status</option>
         <option v-for="st in STATUS_PERMITIDOS" :key="st" :value="st">{{ st }}</option>
       </select>
-      <span class="erro" v-if="erroStatus">{{ erroStatus }}</span>
-      <span class="erro servidor" v-if="erroServidorStatus">{{ erroServidorStatus }}</span>
+      <span v-if="erroStatus" class="erro" data-cy="erro-status">{{ erroStatus }}</span>
+      <span v-if="erroServidorStatus" class="erro servidor" data-cy="erro-servidor-status">{{
+        erroServidorStatus
+      }}</span>
     </div>
 
-    <button type="submit" :disabled="carregando">
+    <button type="submit" data-cy="btn-submit" :disabled="carregando">
       {{ carregando ? 'Enviando…' : 'Cadastrar demanda' }}
     </button>
   </form>
