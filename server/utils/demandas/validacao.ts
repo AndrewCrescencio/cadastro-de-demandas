@@ -11,7 +11,6 @@ import { STATUS_PERMITIDOS, SETORES_PERMITIDOS, LIMITES } from './config'
 import type { Prioridade } from './config'
 import { calcularPrioridade } from './prioridade'
 import { parseDataBrasileira, hojeISO } from '#shared/utils/data'
-import DOMPurify from 'isomorphic-dompurify'
 
 export interface ErroValidacao {
   campo: string
@@ -41,17 +40,28 @@ const estaAusente = (valor: unknown): boolean => valor === undefined || valor ==
 /**
  * Sanitiza texto removendo tags HTML e escapando caracteres perigosos.
  * Preserva texto plano, caracteres portugueses e pontuação segura.
- * Usa DOMPurify (via isomorphic-dompurify) para máxima segurança.
+ * Implementação baseada em regex (sem dependência de DOM) para máxima
+ * compatibilidade em qualquer ambiente Node.js/Nitro.
  *
  * @param texto - Texto a ser sanitizado
  * @returns Texto sanitizado sem tags HTML
  */
-function sanitizarTexto(texto: string): string {
-  return DOMPurify.sanitize(texto, {
-    ALLOWED_TAGS: [], // Não permite nenhuma tag
-    ALLOWED_ATTR: [], // Não permite atributos
-    KEEP_CONTENT: true, // Mantém conteúdo de texto dentro das tags
-  }).trim()
+export function sanitizarTexto(texto: string): string {
+  // 1. Remove script tags e todo conteúdo entre abertura e fechamento
+  let semScripts = texto.replace(/<script[^\s>]*>[\s\S]*?<\/script>/gi, '')
+  // 2. Remove style tags e todo conteúdo (previne CSS-based exfiltração)
+  semScripts = semScripts.replace(/<style[^\s>]*>[\s\S]*?<\/style>/gi, '')
+  // 3. Remove todas as demais tags HTML (img, iframe, a, div, span, etc.)
+  const semTags = semScripts.replace(/<[^>]*>/g, '')
+  // 4. Escapa caracteres que poderiam ser interpretados como HTML
+  const escapado = semTags
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+  // 5. Remove espaços em branco nas extremidades
+  return escapado.trim()
 }
 
 const erroTexto =
@@ -101,22 +111,21 @@ export const criarDemandaSchema = z.object({
   titulo: z
     .string({ error: erroTexto('Título é obrigatório', 'Título deve ser um texto') })
     .trim()
-    .transform(sanitizarTexto)
     .min(1, 'Título é obrigatório')
-    .max(
-      LIMITES.TITULO_MAX_CHARS,
-      `Título não pode exceder ${LIMITES.TITULO_MAX_CHARS} caracteres`,
-    ),
+    .max(LIMITES.TITULO_MAX_CHARS, `Título não pode exceder ${LIMITES.TITULO_MAX_CHARS} caracteres`)
+    .transform(sanitizarTexto)
+    .refine((val) => val.length > 0, 'Título é obrigatório'),
 
   descricao: z
     .string({ error: erroTexto('Descrição é obrigatória', 'Descrição deve ser um texto') })
     .trim()
-    .transform(sanitizarTexto)
     .min(1, 'Descrição é obrigatória')
     .max(
       LIMITES.DESCRICAO_MAX_CHARS,
       `Descrição não pode exceder ${LIMITES.DESCRICAO_MAX_CHARS} caracteres`,
-    ),
+    )
+    .transform(sanitizarTexto)
+    .refine((val) => val.length > 0, 'Descrição é obrigatória'),
 
   dataSolicitacao: dataBrasileiraSchema,
 
