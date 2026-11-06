@@ -11,6 +11,7 @@ import { STATUS_PERMITIDOS, SETORES_PERMITIDOS, LIMITES } from './config'
 import type { Prioridade } from './config'
 import { calcularPrioridade } from './prioridade'
 import { parseDataBrasileira, hojeISO } from '#shared/utils/data'
+import DOMPurify from 'isomorphic-dompurify'
 
 export interface ErroValidacao {
   campo: string
@@ -36,6 +37,23 @@ const estaAusente = (valor: unknown): boolean => valor === undefined || valor ==
  * Mensagem para campos de texto:
  * ausente (undefined/null) = obrigatório; outro tipo = inválido.
  */
+
+/**
+ * Sanitiza texto removendo tags HTML e escapando caracteres perigosos.
+ * Preserva texto plano, caracteres portugueses e pontuação segura.
+ * Usa DOMPurify (via isomorphic-dompurify) para máxima segurança.
+ *
+ * @param texto - Texto a ser sanitizado
+ * @returns Texto sanitizado sem tags HTML
+ */
+function sanitizarTexto(texto: string): string {
+  return DOMPurify.sanitize(texto, {
+    ALLOWED_TAGS: [], // Não permite nenhuma tag
+    ALLOWED_ATTR: [], // Não permite atributos
+    KEEP_CONTENT: true, // Mantém conteúdo de texto dentro das tags
+  }).trim()
+}
+
 const erroTexto =
   (obrigatorio: string, invalido: string) =>
   (iss: { input?: unknown }): string =>
@@ -83,6 +101,7 @@ export const criarDemandaSchema = z.object({
   titulo: z
     .string({ error: erroTexto('Título é obrigatório', 'Título deve ser um texto') })
     .trim()
+    .transform(sanitizarTexto)
     .min(1, 'Título é obrigatório')
     .max(
       LIMITES.TITULO_MAX_CHARS,
@@ -92,6 +111,7 @@ export const criarDemandaSchema = z.object({
   descricao: z
     .string({ error: erroTexto('Descrição é obrigatória', 'Descrição deve ser um texto') })
     .trim()
+    .transform(sanitizarTexto)
     .min(1, 'Descrição é obrigatória')
     .max(
       LIMITES.DESCRICAO_MAX_CHARS,
