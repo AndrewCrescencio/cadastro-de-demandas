@@ -16,3 +16,7 @@ _snapshot/
 .eslintcache
 # artefacto do @nuxt/test-utils: escrito a cada run do projeto app (versão setups)
 .nuxtrc
+# Cypress
+cypress/screenshots
+cypress/videos
+cypress/downloads
