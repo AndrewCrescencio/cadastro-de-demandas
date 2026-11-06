@@ -8,21 +8,7 @@ export default defineConfig({
       '#shared': fileURLToPath(new URL('./shared', import.meta.url)),
     },
   },
-  test: [
-    {
-      name: 'unit',
-      environment: 'happy-dom',
-      include: ['tests/unit/**/*.test.ts'],
-    },
-    {
-      name: 'integration',
-      environment: 'node',
-      include: ['tests/integration/**/*.test.ts'],
-    },
-    {
-      name: 'e2e',
-      environment: 'node',
-      include: ['tests/e2e/**/*.{test,spec}.ts'],
-    },
-  ],
+  test: {
+    globals: false,
+  },
 })
