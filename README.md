@@ -2,189 +2,71 @@
 
 Sistema web full-stack para cadastro e acompanhamento de demandas internas de uma organização, com definição automática de prioridade baseada na descrição.
 
-## 📋 Descrição do Projeto
+---
 
-Este projeto foi desenvolvido como solução para o desafio "Sistema Web de Cadastro de Demandas", permitindo que qualquer área de uma organização registre e consulte demandas internas de forma organizada.
+## 📋 Índice
 
-### Funcionalidades
+- [Funcionalidades](#-funcionalidades)
+- [Tecnologias](#-tecnologias)
+- [🚀 Começar Rápido (Desenvolvimento)](#-começar-rápido-desenvolvimento)
+- [🗄️ Banco de Dados para Testes](#-banco-de-dados-para-testes)
+- [🧪 Testes](#-testes)
+- [🔒 Segurança](#-segurança)
+- [🔧 Makefile - Comandos Úteis](#-makefile---comandos-úteis)
+- [☁️ Deploy na Vercel](#-deploy-na-vercel)
+- [🤖 CI/CD](#-ci-cd)
+- [📁 Estrutura do Projeto](#-estrutura-do-projeto)
+- [📊 Scripts Disponíveis](#-scripts-disponíveis)
 
-- ✅ **Cadastro de demandas** com validação de campos obrigatórios
-- ✅ **Definição automática de prioridade** a partir da descrição
-- ✅ **Consulta de demandas** com filtros por status, setor e prioridade
-- ✅ **Visualização de detalhes** de cada demanda
-- ⚡ **Resumo visual** (opcional) com estatísticas agregadas
+---
 
-## 🛠️ Tecnologias Utilizadas
+## ✨ Funcionalidades
 
-### Frontend
+- **Cadastro de demandas** com validação de campos obrigatórios
+- **Definição automática de prioridade** baseada na descrição (palavras-chave: urgente, erro)
+- **Consulta de demandas** com filtros por status, setor e prioridade
+- **Visualização de detalhes** de cada demanda
+- **Proteção contra XSS** (sanitização de entrada + Content Security Policy)
+- **Testes automatizados**: unitários, integração, API e E2E
 
-- **Nuxt 4** (Vue 3) - Framework full-stack moderno
-- **TypeScript** - Tipagem estática para maior segurança
+---
 
-### Backend
+## 🛠️ Tecnologias
 
-- **Nitro** - Server engine do Nuxt (H3)
-- **Drizzle ORM** - ORM type-safe para PostgreSQL
-- **Zod** - Validação de schemas e dados
-- **PostgreSQL 18** - Banco de dados relacional
+| Camada               | Tecnologia                 |
+| -------------------- | -------------------------- |
+| Frontend             | Nuxt 4 (Vue 3), TypeScript |
+| Backend              | Nitro (H3)                 |
+| ORM                  | Drizzle ORM                |
+| Banco                | PostgreSQL 18              |
+| Validação            | Zod                        |
+| Testes Unitários/API | Vitest                     |
+| Testes E2E           | Cypress                    |
+| Lint                 | ESLint + Prettier          |
+| Git Hooks            | Husky                      |
+| Container            | Docker                     |
 
-### Qualidade & DevOps
+---
 
-- **Vitest** - Framework de testes unitários e integração
-- **ESLint** - Linter de código
-- **Prettier** - Formatação de código
-- **Husky** - Git hooks para CI
-- **Docker** - Containerização do banco de dados
+## 🚀 Começar Rápido (Desenvolvimento)
 
-## 📁 Como a Solução Foi Estruturada
+Siga estes passos para rodar o projeto localmente:
 
-```
-cadastro-de-demandas/
-├── app/                          # Frontend (Nuxt/Vue)
-│   ├── pages/
-│   │   ├── index.vue            # Página de cadastro
-│   │   ├── consulta.vue         # Página de listagem/filtros
-│   │   └── demanda/[id].vue     # Detalhes de uma demanda
-│   └── components/
-│       ├── DemandaForm.vue      # Formulário de cadastro
-│       ├── DemandaList.vue      # Lista de demandas
-│       └── DemandaFilter.vue    # Filtros de consulta
-│
-├── server/                       # Backend (Nitro)
-│   ├── api/
-│   │   └── demandas/
-│   │       ├── index.get.ts     # GET /api/demandas (listar)
-│   │       ├── index.post.ts    # POST /api/demandas (criar)
-│   │       ├── [id].get.ts      # GET /api/demandas/:id (detalhes)
-│   │       └── resumo.get.ts    # GET /api/demandas/resumo (estatísticas)
-│   ├── utils/
-│   │   ├── demandas/
-│   │   │   ├── config.ts        # Configuração (setores, status, palavras-chave)
-│   │   │   ├── prioridade.ts    # Regra de prioridade automática
-│   │   │   └── validacao.ts     # Validação de campos
-│   │   ├── db/
-│   │   │   └── index.ts         # Conexão com banco de dados
-│   │   └── shared/
-│   │       ├── errors.ts        # Tratamento de erros
-│   │       └── validate.ts      # Utilitários de validação
-│   ├── db/
-│   │   └── schema/
-│   │       └── demandas.ts      # Schema da tabela
-│   └── error-handler.ts         # Error handler global
-│
-├── shared/                       # Código compartilhado
-│   └── types/
-│       └── demanda.ts           # Tipos TypeScript
-│
-├── tests/                        # Testes automatizados
-│   ├── unit/
-│   │   ├── prioridade.test.ts   # Testes da regra de prioridade
-│   │   └── validacao.test.ts    # Testes de validação
-│   └── integration/
-│       └── demandas.test.ts     # Testes de API (a implementar)
-│
-├── drizzle/                      # Migrations do banco
-│   └── migrations/
-│       └── 0001_create_demandas.sql
-│
-└── docs/                         # Documentação
-    └── exemplos-teste-demandas.md
-```
-
-### Separação de Responsabilidades
-
-A arquitetura segue o princípio de **separação de responsabilidades**:
-
-1. **Camada de Apresentação** (`app/`) - Interface do usuário
-2. **Camada de API** (`server/api/`) - Endpoints HTTP
-3. **Camada de Negócio** (`server/utils/`) - Lógica de negócio isolada e testável
-4. **Camada de Dados** (`server/db/`) - Acesso ao banco de dados
-
-## 🎯 Como a Regra de Prioridade Foi Implementada
-
-A regra de prioridade está implementada em `server/utils/demandas/prioridade.ts` como uma **função pura e testável**:
-
-```typescript
-export function calcularPrioridade(descricao: string): Prioridade {
-  // Normaliza para lowercase
-  const descricaoNormalizada = descricao.toLowerCase()
-
-  // Busca palavras-chave completas (word boundaries)
-  for (const palavra of PALAVRAS_CHAVE_ALTA_PRIORIDADE) {
-    const regex = new RegExp(`\\b${palavra}\\b`, 'i')
-
-    if (regex.test(descricaoNormalizada)) {
-      return 'Alta'
-    }
-  }
-
-  return 'Normal'
-}
-```
-
-### Características da Implementação
-
-- ✅ **Case-insensitive**: "URGENTE", "urgente", "Urgente" são tratados igualmente
-- ✅ **Palavra completa**: "erro" em "erro-404" conta, mas não em "terror"
-- ✅ **Aceita plural**: "urgente", "urgentes", "erro", "erros"
-- ✅ **Configurável**: Palavras-chave definidas em `config.ts` (fácil de estender)
-- ✅ **Testável**: Função pura sem dependências externas
-
-### Palavras-Chave (Padrão)
-
-- **Alta prioridade**: `urgente`, `urgentes`, `erro`, `erros`
-- **Normal**: Qualquer descrição que não contenha as palavras acima
-
-Para adicionar novas palavras-chave (ex: "crítico", "bloqueado"), basta editar `server/utils/demandas/config.ts`.
-
-## 🧪 Testes Automatizados
-
-O projeto inclui **95 testes automatizados** cobrindo:
-
-### Testes Unitários (47 testes de prioridade)
-
-- ✅ Todos os 12 exemplos especificados no desafio
-- ✅ Casos de borda (pontuação, negação, plural, maiúsculas)
-- ✅ Variações que não devem ativar a regra
-
-### Testes de Validação (48 testes)
-
-- ✅ Campos obrigatórios
-- ✅ Limites de caracteres (150 para título, 2000 para descrição)
-- ✅ Validação de data (formato DD/MM/AAAA, não futura)
-- ✅ Listas fechadas (setores e status)
-
-Para executar os testes:
-
-```bash
-pnpm test           # Todos os testes
-pnpm test:unit      # Apenas testes unitários
-pnpm test:watch     # Modo watch
-```
-
-## 🚀 Como Executar
-
-### Pré-requisitos
-
-- **Node.js** >= 24.0.0
-- **pnpm** (gerenciador de pacotes)
-- **Docker** (para o banco de dados)
-
-### 1. Instalar Dependências
+### 1. Instalar dependências
 
 ```bash
 pnpm install
 ```
 
-### 2. Configurar Variáveis de Ambiente
+### 2. Configurar variáveis de ambiente
 
 ```bash
 cp .env.example .env
 ```
 
-Edite o `.env` se necessário (valores padrão já funcionam).
+O `.env` padrão já aponta para PostgreSQL local na porta 5432. Ajuste se necessário.
 
-### 3. Iniciar o Banco de Dados
+### 3. Iniciar o banco de dados (PostgreSQL)
 
 ```bash
 docker compose up -d postgres
@@ -194,16 +76,16 @@ Aguarde o banco estar pronto:
 
 ```bash
 docker compose logs postgres -f
-# Aguarde ver: "database system is ready to accept connections"
+# Procure por: "database system is ready to accept connections"
 ```
 
-### 4. Executar Migrations
+### 4. Executar migrations
 
 ```bash
 pnpm db:migrate
 ```
 
-### 5. Iniciar o Servidor de Desenvolvimento
+### 5. Iniciar o servidor de desenvolvimento
 
 ```bash
 pnpm dev
@@ -211,178 +93,284 @@ pnpm dev
 
 Acesse: **http://localhost:3000**
 
-### 6. (Opcional) Verificar Qualidade do Código
+---
+
+## 🗄️ Banco de Dados para Testes
+
+O projeto usa um banco separado para testes (`demandas_test`), evitando contaminação de dados entre desenvolvimento e testes.
+
+### Configurar banco de testes
 
 ```bash
-pnpm check          # Formato, lint e typecheck
-pnpm test           # Executar testes
+# 1. Copiar exemplo de variáveis de teste
+cp .env.test.example .env.test
+
+# 2. Criar banco e rodar migrations
+make db-test
+
+# 3. Verificar que está funcionando
+make migrate-test
 ```
 
-## 🐳 Docker
-
-### Banco de Dados
-
-O `docker-compose.yml` configura um PostgreSQL 18 para desenvolvimento:
+### Rodar testes de API com banco isolado
 
 ```bash
-docker compose up -d        # Iniciar
-docker compose down         # Parar
-docker compose down -v      # Parar e remover dados
-docker compose logs -f      # Ver logs
+make test:api
 ```
 
-### Aplicação (Futuro)
+---
 
-O `Dockerfile` está preparado para build de produção:
+## 🧪 Testes
+
+### Tipos de teste
+
+| Tipo           | Comando          | O que testa                                        |
+| -------------- | ---------------- | -------------------------------------------------- |
+| Unitários      | `pnpm test:unit` | Funções puras (prioridade, validação, sanitização) |
+| API/Integração | `pnpm test:api`  | Endpoints HTTP com banco real                      |
+| E2E (Cypress)  | `pnpm cy:run`    | Fluxo completo no navegador                        |
+| Todos          | `pnpm test`      | Todos os testes Vitest                             |
+
+### Executar testes
 
 ```bash
-docker build -t cadastro-demandas .
-docker run -p 3000:3000 cadastro-demandas
+# Todos os testes Vitest
+pnpm test
+
+# Apenas unitários
+pnpm test:unit
+
+# Apenas API (requer banco de testes configurado)
+pnpm test:api
+
+# Modo watch (desenvolvimento)
+pnpm test:watch
 ```
 
-## 📊 Principais Decisões Tomadas
+### Testes E2E com Cypress
 
-### 1. Arquitetura Monolítica com Nuxt Full-Stack
+```bash
+# Headless (CI)
+pnpm cy:run
 
-**Decisão**: Usar Nuxt 4 (full-stack) ao invés de separar frontend e backend.
+# Interface visual (desenvolvimento)
+pnpm cy:open
 
-**Justificativa**:
+# Servidor dev + Cypress
+pnpm test:e2e
+```
 
-- Simplicidade de deploy (um único serviço)
-- Type-safety end-to-end (tipos compartilhados)
-- Hot Module Replacement (HMR) em dev
-- SSR/SSG quando necessário
+---
 
-### 2. Drizzle ORM
+## 🔒 Segurança
 
-**Decisão**: Usar Drizzle ao invés de Prisma ou SQL raw.
+### Sanitização XSS
 
-**Justificativa**:
+O backend sanitiza entradas de texto removendo tags HTML perigosas (`<script>`, `<img>`, `<iframe>`, etc.) antes de armazenar. Caracteres perigosos são escapados.
 
-- Type-safe e leve
-- Migrations SQL transparentes
-- Sem runtime overhead
-- Controle fino sobre queries
+### Content Security Policy (CSP)
 
-### 3. Validação em Duas Camadas
+Um cabeçalho CSP é enviado em todas as respostas, bloqueando scripts inline, `eval()` e recursos de origens não confiáveis.
 
-**Decisão**: Validar no cliente (UX) E no servidor (segurança).
+---
 
-**Justificativa**:
+## 🔧 Makefile - Comandos Úteis
 
-- Cliente: feedback imediato, melhor UX
-- Servidor: garantia de integridade, não confiar no cliente
+```bash
+make help              # Lista todos os alvos
+make init              # Do zero ao banco migrado
+make setup             # Instala dependências e gera tipos Nuxt
+make db                # Sobe PostgreSQL via Docker
+make db:migrate        # Executa migrations no banco de desenvolvimento
+make db-test           # Cria e migra banco de testes (demandas_test)
+make migrate-test      # Reexecuta migrations no banco de testes
+make test:api          # Roda testes de API com banco de testes
+make dev               # Sobe stack dev (foreground)
+make dev-d             # Sobe stack dev (background)
+make prod              # Sobe stack de produção
+make studio            # Abre Drizzle Studio
+```
 
-### 4. Configuração Centralizada
+---
 
-**Decisão**: Palavras-chave, setores e status em `config.ts`.
+## ☁️ Deploy na Vercel
 
-**Justificativa**:
+O projeto está configurado para deploy automático na Vercel via CI/CD (GitHub Actions).
 
-- Single Source of Truth
-- Fácil personalização por organização
-- Evita hard-coded values espalhados
+### Pré-requisitos
 
-### 5. Testes Unitários Extensivos
+1. Conta na [Vercel](https://vercel.com)
+2. Repositório conectado ao GitHub
+3. Variáveis de ambiente configuradas na Vercel:
+   - `DATABASE_URL` - URL do PostgreSQL de produção
 
-**Decisão**: 95 testes cobrindo regras de negócio.
+### Como fazer deploy
 
-**Justificativa**:
+1. Faça push para a branch `main` (ou `dev`, conforme configurado)
+2. O GitHub Actions executará testes e fará deploy automático
+3. Acesse a URL fornecida pela Vercel
 
-- Confiança em refatorações
-- Documentação viva do comportamento esperado
-- Previne regressões
+### Configurar variáveis na Vercel
 
-### 6. Data no Formato Brasileiro (DD/MM/AAAA)
+No painel da Vercel: **Settings → Environment Variables**, adicione:
 
-**Decisão**: Entrada/exibição em DD/MM/AAAA, armazenamento em ISO 8601.
+```
+DATABASE_URL=postgresql://usuario:senha@host:5432/banco
+NODE_ENV=production
+```
 
-**Justificativa**:
+---
 
-- Familiar para usuários brasileiros
-- ISO 8601 no banco para portabilidade
-- Conversão apenas nas bordas (input/output)
+## 🤖 CI/CD
 
-### 7. Prioridade Gravada (Não Calculada)
+O projeto usa **GitHub Actions** para integração contínua e deploy contínuo.
 
-**Decisão**: Calcular e gravar a prioridade no cadastro.
+### Workflow: `.github/workflows/ci-cd.yml`
 
-**Justificativa**:
+Executado em todo `push` e `pull request`:
 
-- Edição está fora do escopo (não há recálculo)
-- Performance: evita processar descrição a cada consulta
-- Histórico: preserva prioridade mesmo se regras mudarem
+1. **Instalar dependências** (`pnpm install`)
+2. **Rodar testes unitários** (`pnpm test:unit`)
+3. **Rodar testes de API** (com banco de testes PostgreSQL via Docker)
+4. **Lint** (`pnpm lint`)
+5. **Typecheck** (`pnpm typecheck`)
+6. **Build** (`pnpm build`)
+7. **Deploy na Vercel** (apenas na branch `main`)
+
+### Arquivos de CI/CD
+
+| Arquivo                       | Descrição                            |
+| ----------------------------- | ------------------------------------ |
+| `.github/workflows/ci-cd.yml` | Pipeline principal (testes + deploy) |
+
+---
+
+## 📁 Estrutura do Projeto
+
+```
+cadastro-de-demandas/
+├── .github/
+│   └── workflows/
+│       └── ci-cd.yml          # Pipeline CI/CD
+├── .env.example               # Exemplo de variáveis (desenvolvimento)
+├── .env.test.example          # Exemplo de variáveis (testes)
+├── .gitignore                 # Arquivos ignorados pelo Git
+├── Dockerfile                 # Container da aplicação
+├── docker-compose.yml         # PostgreSQL para desenvolvimento
+├── Makefile                   # Comandos de automação
+├── drizzle.config.ts          # Configuração Drizzle Kit
+├── nuxt.config.ts             # Configuração Nuxt
+├── package.json               # Dependências e scripts
+├── pnpm-workspace.yaml        # Workspace pnpm
+├── tsconfig.json              # Configuração TypeScript
+├── vitest.config.ts           # Configuração base Vitest
+├── vitest.api.config.ts       # Configuração testes de API
+├── vitest.app.config.ts       # Configuração testes de componentes Vue
+├── app/                       # Frontend (Nuxt/Vue)
+│   ├── pages/
+│   │   ├── index.vue          # Cadastro de demanda
+│   │   ├── consulta.vue       # Listagem e filtros
+│   │   └── demanda/[id].vue   # Detalhes da demanda
+│   └── components/
+│       ├── DemandaForm.vue
+│       ├── DemandaList.vue
+│       └── DemandaFilter.vue
+├── server/                    # Backend (Nitro)
+│   ├── api/
+│   │   └── demandas/
+│   │       ├── index.get.ts   # GET /api/demandas
+│   │       ├── index.post.ts  # POST /api/demandas
+│   │       ├── [id].get.ts    # GET /api/demandas/:id
+│   │       └── resumo.get.ts  # GET /api/demandas/resumo
+│   ├── middleware/
+│   │   └── csp.ts             # Content Security Policy
+│   ├── utils/
+│   │   ├── demandas/
+│   │   │   ├── config.ts
+│   │   │   ├── prioridade.ts
+│   │   │   └── validacao.ts   # + sanitização XSS
+│   │   ├── db/
+│   │   │   └── index.ts       # Conexão PostgreSQL
+│   │   └── shared/
+│   │       ├── errors.ts
+│   │       └── validate.ts
+│   ├── db/
+│   │   └── schema/
+│   │       └── demandas.ts
+│   └── error-handler.ts
+├── shared/
+│   └── types/
+│       └── demanda.ts
+├── test/                      # Testes automatizados
+│   ├── api/
+│   │   ├── post-demandas.test.ts
+│   │   ├── get-demandas.test.ts
+│   │   └── get-demanda-id.test.ts
+│   ├── unit/
+│   │   ├── demandas.test.ts
+│   │   └── security/
+│   │       └── sanitizacao.test.ts
+│   ├── pbt/
+│   │   ├── xss-bug-condition.test.ts
+│   │   └── xss-preservation.test.ts
+│   └── setup/
+│       ├── db-cleanup.ts      # Limpeza de banco entre testes
+│       └── api-setup.ts
+├── cypress/                   # Testes E2E
+│   ├── e2e/
+│   │   └── demandas.cy.ts
+│   ├── support/
+│   │   ├── commands.ts
+│   │   └── e2e.ts
+│   └── cypress.config.ts
+├── drizzle/                   # Migrations SQL
+└── docs/                      # Documentação adicional
+```
+
+---
+
+## 📊 Scripts Disponíveis
+
+```bash
+# Desenvolvimento
+pnpm dev            # Servidor de desenvolvimento (localhost:3000)
+pnpm build          # Build de produção
+pnpm preview        # Preview do build de produção
+
+# Testes
+pnpm test           # Todos os testes Vitest
+pnpm test:unit      # Testes unitários
+pnpm test:api       # Testes de API (requer banco de testes)
+pnpm test:watch     # Modo watch
+
+# E2E
+pnpm cy:run         # Cypress headless
+pnpm cy:open        # Cypress interface visual
+pnpm test:e2e       # Servidor + Cypress
+
+# Qualidade de código
+pnpm lint           # ESLint
+pnpm lint:fix       # ESLint com auto-correção
+pnpm format         # Prettier formatar
+pnpm format:check   # Verificar formatação
+pnpm typecheck      # Verificação de tipos TypeScript
+pnpm check          # Formato + lint + typecheck
+
+# Banco de dados
+pnpm db:migrate     # Executar migrations
+npx drizzle-kit studio  # Drizzle Studio
+```
+
+---
 
 ## 📚 Documentação Adicional
 
 - [Exemplos de Teste Manual](docs/exemplos-teste-demandas.md) - Casos de teste para validação manual
 
-## 🔧 Scripts Disponíveis
-
-```bash
-pnpm dev            # Desenvolvimento (http://localhost:3000)
-pnpm build          # Build de produção
-pnpm preview        # Preview do build
-pnpm test           # Executar todos os testes
-pnpm test:unit      # Testes unitários
-pnpm test:watch     # Testes em modo watch
-pnpm lint           # Verificar código com ESLint
-pnpm lint:fix       # Corrigir problemas de lint
-pnpm format         # Formatar código com Prettier
-pnpm format:check   # Verificar formatação
-pnpm typecheck      # Verificar tipos TypeScript
-pnpm check          # Formato + lint + typecheck
-pnpm db:migrate     # Executar migrations do banco
-```
-
-## 🎨 Interface
-
-A interface foi desenvolvida com foco em **funcionalidade e clareza**, priorizando:
-
-- Formulários simples e objetivos
-- Mensagens de erro claras em português
-- Feedback visual de validação
-- Estados vazios informativos
-
-Não há foco em sofisticação visual, conforme especificado no desafio.
-
-## 📝 Entidades
-
-### Demanda
-
-| Campo               | Tipo               | Regra                                       |
-| ------------------- | ------------------ | ------------------------------------------- |
-| ID                  | Número (serial)    | Gerado automaticamente                      |
-| Título              | String (até 150)   | Obrigatório                                 |
-| Descrição           | String (até 2000)  | Obrigatório                                 |
-| Data de Solicitação | Date               | Obrigatório, não futura, formato DD/MM/AAAA |
-| Setor               | Enum               | Obrigatório, lista fechada                  |
-| Status              | Enum               | Obrigatório, lista fechada                  |
-| Prioridade          | Enum (Alta/Normal) | Calculada automaticamente                   |
-| Criado em           | Timestamp          | Gerado automaticamente                      |
-
-### Valores Permitidos
-
-**Setores**: Administrativo, Comercial, Financeiro, Jurídico, Operações, RH, TI, Outros
-
-**Status**: Aberta, Em andamento, Concluída, Cancelada
-
-**Prioridades**: Normal, Alta (calculada automaticamente)
-
-## 🚀 Próximos Passos (Roadmap)
-
-- [ ] Implementar endpoints da API (POST, GET)
-- [ ] Implementar frontend (formulário, listagem, detalhes)
-- [ ] Testes de integração
-- [ ] Resumo visual (Power BI / Excel)
-- [ ] Deploy em produção
-
 ## 📄 Licença
 
-Este projeto foi desenvolvido como parte de um desafio técnico.
+Projeto desenvolvido como solução para o desafio "Sistema Web de Cadastro de Demandas".
 
 ## 👤 Autor
 
-Desenvolvido como solução para o desafio "Sistema Web de Cadastro de Demandas".
-
-**Data**: Novembro 2026
+Novembro 2026
