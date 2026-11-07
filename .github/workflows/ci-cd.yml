@@ -1,0 +1,110 @@
+name: CI/CD - Testes e Deploy na Vercel
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+env:
+  # Usar pnpm como gerenciador de pacotes
+  PNPM_CACHE_FOLDER: ~/.pnpm-store
+
+jobs:
+  # ---------------------------------------------------------------
+  # Job: Testes e Qualidade de Código
+  # ---------------------------------------------------------------
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: demandas
+          POSTGRES_PASSWORD: demandas
+          POSTGRES_DB: demandas_test
+        ports:
+          - '5432:5432'
+        options: >-
+          --health-cmd "pg_isready -U demandas -d demandas_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: 📥 Checkout do código
+        uses: actions/checkout@v4
+
+      - name: 📦 Instalar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: 🟢 Instalar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: 📥 Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔧 Gerar tipos do Nuxt
+        run: pnpm dlx nuxt prepare
+
+      - name: 🧪 Executar testes unitários
+        run: pnpm test:unit
+
+      - name: 🗄️ Executar migrations no banco de testes
+        env:
+          DATABASE_URL: postgresql://demandas:demandas@localhost:5432/demandas_test
+        run: pnpm db:migrate
+
+      - name: 🧪 Executar testes de API
+        env:
+          DATABASE_URL: postgresql://demandas:demandas@localhost:5432/demandas_test
+        run: pnpm test:api
+
+      - name: 🧹 Executar lint
+        run: pnpm lint
+
+      - name: 🔍 Executar typecheck
+        run: pnpm typecheck
+
+      - name: 🏗️ Build de produção
+        run: pnpm build
+
+  # ---------------------------------------------------------------
+  # Job: Deploy na Vercel (apenas na branch main)
+  # ---------------------------------------------------------------
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: 📥 Checkout do código
+        uses: actions/checkout@v4
+
+      - name: 📦 Instalar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: 🟢 Instalar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: 📥 Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: 🏗️ Build de produção
+        run: pnpm build
+
+      - name: ☁️ Deploy na Vercel
+        run: npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
