@@ -59,3 +59,23 @@ prod-logs: ## Segue logs de produção
 
 studio: ## Abre Drizzle Studio
 	npx drizzle-kit studio
+
+# ---------------------------------------------------------------
+# Banco de dados para TESTES
+# ---------------------------------------------------------------
+db-test: ## Sobe PostgreSQL e cria/migra banco de testes (demandas_test)
+	@$(COMPOSE) up -d --wait postgres || \
+		echo "⚠ compose não subiu — usando PostgreSQL existente na porta 5432"
+	@echo "✓ Criando banco de testes demandas_test (se não existir)..."
+	@PGPASSWORD=demandas psql -U demandas -h localhost -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='demandas_test'" | grep -q 1 || \
+		PGPASSWORD=demandas createdb -U demandas -h localhost demandas_test
+	@echo "✓ Rodando migrations no banco de testes..."
+	DATABASE_URL=postgresql://demandas:demandas@localhost:5432/demandas_test npx drizzle-kit migrate
+	@echo "✓ Banco de testes pronto."
+
+migrate-test: ## Apenas roda migrations no banco de testes
+	DATABASE_URL=postgresql://demandas:demandas@localhost:5432/demandas_test npx drizzle-kit migrate
+
+test:api: ## Roda testes de API com banco de testes
+	@echo "⚠ Certifique-se de que o banco de testes está configurado (make db-test)"
+	DATABASE_URL=postgresql://demandas:demandas@localhost:5432/demandas_test pnpm test:api

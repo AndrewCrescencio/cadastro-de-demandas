@@ -5,13 +5,19 @@
  * A lógica pura já está coberta em testes unitários — aqui testamos o encanamento HTTP.
  */
 
-import { describe, test, expect } from 'vitest'
+import { describe, test, expect, beforeEach } from 'vitest'
 import { setup, $fetch } from '@nuxt/test-utils/e2e'
 import { fileURLToPath } from 'node:url'
+import { limparBanco } from '../setup/db-cleanup'
 
 describe('POST /api/demandas', async () => {
   await setup({
     rootDir: fileURLToPath(new URL('../..', import.meta.url)),
+  })
+
+  // Limpa o banco antes de cada teste para garantir isolamento
+  beforeEach(async () => {
+    await limparBanco()
   })
 
   // Dados base válidos para testes
